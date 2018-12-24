@@ -1,0 +1,6 @@
+[program:xvfb]
+
+command = Xvfb :{{virtual_display_no | default('99')}} -screen 0 1280x1024x24+32
+
+stdout_logfile = /var/log/supervisor/%(program_name)s-out.log
+stderr_logfile = /var/log/supervisor/%(program_name)s-err.log

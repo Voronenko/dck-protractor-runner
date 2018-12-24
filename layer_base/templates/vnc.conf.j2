@@ -1,0 +1,6 @@
+[program:vnc]
+command=x11vnc -forever -display :{{virtual_display_no | default('99')}}
+priority=15
+redirect_stderr=true
+stdout_logfile_backups=2
+stdout_logfile_maxbytes=10MB

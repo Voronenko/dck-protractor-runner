@@ -1,0 +1,22 @@
+{
+    "builders": [{
+        "type": "docker",
+        "image": "selenium/standalone-chrome-debug:3.141.59",
+        "commit": true,
+        "changes": [
+            "ENTRYPOINT [\"/opt/bin/entry_point.sh\"]"
+        ]
+    }],
+    "provisioners": [{
+        "type": "ansible",
+        "user": "seluser",
+        "playbook_file": "layer_protractor/provision_light.yml"
+    }],
+    "post-processors": [
+        [{
+            "type": "docker-tag",
+            "repository": "docker.io/voronenko/protractor-runner",
+            "tag": "protractor_layer_debug"
+        }]
+    ]
+}

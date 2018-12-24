@@ -1,0 +1,23 @@
+---
+
+- name: Provision App Logic
+  hosts: all
+
+  vars:
+    virtual_display_no: 99
+
+  tasks:
+    - name: debug
+      debug: msg="======================================================================================"
+
+- name: Container cleanup
+  hosts: all
+  gather_facts: no
+  tasks:
+    - name: Remove python
+      raw: apt-get autoremove -y && apt-get clean
+      become: yes
+
+    - name: Remove apt lists
+      raw: rm -rf /var/lib/apt/lists/*
+      become: yes

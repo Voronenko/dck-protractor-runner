@@ -1,0 +1,52 @@
+---
+
+- name: Provision App Logic
+  hosts: all
+
+  vars:
+    virtual_display_no: 99
+
+  tasks:
+
+    - name: Install ep
+      get_url:
+          url: https://github.com/kreuzwerker/envplate/releases/download/1.0.0-RC1/ep-linux
+          dest: /usr/local/bin/ep
+          mode: "u=rwx,g=rx,o=rx"
+          validate_certs: no
+      become: yes    
+
+    - name: Installing Nodejs repo
+      shell: curl https://raw.githubusercontent.com/nodesource/distributions/master/deb/setup_8.x -o /tmp/setup_8.x && bash /tmp/setup_8.x
+      become: yes
+
+    - name: Installing packages
+      apt: name="{{item}}" state=present update_cache=yes
+      with_items:
+        - nodejs
+      become: yes        
+            
+    - name: Installing http-backend-proxy through npm
+      shell: npm install -g protractor http-backend-proxy    
+      become: yes      
+    
+    - name: Install Selenium and Chrome driver  
+      shell: webdriver-manager update
+      become: yes          
+
+    - name: install lodash moment jasmine-reporters
+      shell: npm install lodash moment jasmine-reporters
+      become: yes      
+
+
+- name: Container cleanup
+  hosts: all
+  gather_facts: no
+  tasks:
+    - name: Remove python
+      raw:  apt-get autoremove -y && apt-get clean
+      become: yes        
+
+    - name: Remove apt lists
+      raw: rm -rf /var/lib/apt/lists/*
+      become: yes        

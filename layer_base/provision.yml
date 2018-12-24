@@ -1,0 +1,85 @@
+---
+
+- name: Provision Python
+  hosts: all
+  gather_facts: no
+  tasks:
+    - name: Boostrap python
+      raw: test -e /usr/bin/python || (apt-get -y update && apt-get install -y python-minimal)
+
+    - shell: apt-get install -y --no-install-recommends locales nano apt-transport-https      
+
+    - name: Ensure a locale exists
+      locale_gen:
+        name: en_US.UTF-8
+        state: present
+
+    - name: Install ep
+      get_url:
+          url: https://github.com/kreuzwerker/envplate/releases/download/1.0.0-RC1/ep-linux
+          dest: /usr/local/bin/ep
+          mode: "u=rwx,g=rx,o=rx"
+          validate_certs: no
+
+- name: Provision App Logic
+  hosts: all
+
+  vars:
+    virtual_display_no: 99
+
+  tasks:
+    - name: debug
+      debug: msg="======================================================================================"
+
+    - name: Installing ffmpeg repo
+      shell: |
+             curl http://www.deb-multimedia.org/pool/main/d/deb-multimedia-keyring/deb-multimedia-keyring_2016.8.1_all.deb \
+             -o /tmp/deb-multimedia-keyring_2016.8.1_all.deb && \
+             dpkg -i /tmp/deb-multimedia-keyring_2016.8.1_all.deb && \
+             rm /tmp/deb-multimedia-keyring_2016.8.1_all.deb  
+
+    - name: Installing deb multimedia
+      shell: |
+            echo "deb http://www.deb-multimedia.org jessie main non-free" >> /etc/apt/sources.list && \
+            echo "deb http://www.deb-multimedia.org jessie-backports main" >> /etc/apt/sources.list             
+
+    - name: Installing firefox repo and cleaning iceweasel
+      shell:  |
+            apt-get purge iceweasel icedove && echo "deb http://downloads.sourceforge.net/project/ubuntuzilla/mozilla/apt all main" > /etc/apt/sources.list.d/mozilla.list && \
+            apt-key adv --recv-keys --keyserver keyserver.ubuntu.com C1289A29
+
+    - name: Installing packages
+      apt: name="{{item}}" state=present  update_cache=yes
+      with_items:
+        - xvfb
+        - libgconf-2-4
+        - libexif12
+        - chromium
+        - netcat-traditional
+        - x11vnc
+        - ffmpeg
+        - firefox-mozilla-build 
+        - libgtk-3-0
+        - supervisor    
+        
+    - name: template configs
+      template: src="templates/{{item}}.conf.j2" dest="/etc/supervisor/conf.d/{{item}}.conf"
+      with_items:
+         - vnc
+         - xvfb
+
+    - name: mkdir ~/.vnc
+      shell: mkdir ~/.vnc
+
+    - name: Setup a vnc password
+      shell: x11vnc -storepasswd secret ~/.vnc/passwd
+
+- name: Container cleanup
+  hosts: all
+  gather_facts: no
+  tasks:
+    - name: Clear artifacts
+      raw: apt-get autoremove -y && apt-get clean
+
+    - name: Remove apt lists
+      raw: rm -rf /var/lib/apt/lists/*

@@ -1,0 +1,33 @@
+{
+    "builders": [
+        {
+            "type": "docker",
+            "image": "library/java:8-jre",
+            "commit": true,
+            "changes": [
+                "ENV OS_LOCALE=\"en_US.UTF-8\"",
+                "ENV LANG=${OS_LOCALE}",
+                "ENV LANGUAGE=${OS_LOCALE}",
+                "ENV LC_ALL=${OS_LOCALE}",
+                "ENV DEBIAN_FRONTEND=noninteractive",
+                "CMD [\"/usr/bin/supervisord\", \"-n\"]"
+            ]
+        }
+    ],
+    "provisioners": [
+        {
+            "type": "ansible",
+            "user": "root",
+            "playbook_file": "layer_base/provision.yml"
+        }
+    ],
+    "post-processors": [
+        [
+            {
+                "type": "docker-tag",
+                "repository": "docker.io/voronenko/protractor-runner",
+                "tag": "base_layer"
+            }
+        ]
+    ]
+}
